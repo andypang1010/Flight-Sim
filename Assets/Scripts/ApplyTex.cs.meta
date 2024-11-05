@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 59dd5c0a8b88bc34cb56b01ff4a7d8c8
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - material: {fileID: 2100000, guid: b4d2ea6819dc38c44bf6a23954a6a350, type: 2}
+  - grassTexture: {instanceID: 0}
+  - snowTexture: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
