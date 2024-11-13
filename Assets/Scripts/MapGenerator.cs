@@ -3,11 +3,13 @@ using System.Collections;
 using System;
 using System.Threading;
 using System.Collections.Generic;
+using System.IO;
 
 public class MapGenerator : MonoBehaviour {
 
 	public enum DrawMode {NoiseMap, ColourMap, Mesh, FalloffMap};
 	public DrawMode drawMode;
+	public HeightmapToSplatmapExporter exporter;
 
 	public Noise.NormalizeMode normalizeMode;
 
@@ -105,6 +107,7 @@ public class MapGenerator : MonoBehaviour {
 
 	MapData GenerateMapData(Vector2 centre) {
 		float[,] noiseMap = Noise.GenerateNoiseMap (mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistance, lacunarity, centre + offset, normalizeMode);
+		Texture2D heightMapTexture = new Texture2D(mapChunkSize, mapChunkSize, TextureFormat.RGBA32, false);
 
 		Color[] colourMap = new Color[mapChunkSize * mapChunkSize];
 		for (int y = 0; y < mapChunkSize; y++) {
@@ -112,6 +115,9 @@ public class MapGenerator : MonoBehaviour {
 				if (useFalloff) {
 					noiseMap [x, y] = Mathf.Clamp01(noiseMap [x, y] - falloffMap [x, y]);
 				}
+				Color noiseColor = new Color(noiseMap[x,y], noiseMap[x,y], noiseMap[x,y]);
+				heightMapTexture.SetPixel(x, y, noiseColor);
+
 				float currentHeight = noiseMap [x, y];
 				for (int i = 0; i < regions.Length; i++) {
 					if (currentHeight >= regions [i].height) {
@@ -123,6 +129,13 @@ public class MapGenerator : MonoBehaviour {
 			}
 		}
 
+		heightMapTexture.Apply();
+		exporter.ExportSplatmap();
+
+		byte[] bytes = heightMapTexture.EncodeToPNG();
+		print(Application.dataPath);
+        File.WriteAllBytes(Application.dataPath + "/HeightMapTexture.png", bytes);
+        Debug.Log("HeightMap exported as HeightMapTexture.png");
 
 		return new MapData (noiseMap, colourMap);
 	}
