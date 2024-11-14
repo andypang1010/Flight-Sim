@@ -57,7 +57,6 @@ public class MapGenerator : MonoBehaviour
 	{
 		MapData mapData = GenerateMapData(Vector2.zero);
 		this.md = mapData;
-		Debug.Log(this.md == mapData);
 
 		MapDisplay display = FindObjectOfType<MapDisplay>();
 		if (drawMode == DrawMode.NoiseMap)
@@ -269,7 +268,7 @@ public class MapGenerator : MonoBehaviour
 			for (int x = 1; x < (mapChunkSize - 1); x++)
 			{
 				float worldHeight = heightMap[x, y] * meshHeightMultiplier;
-				float evaluatedHeight = (worldHeight) + 100;
+				float evaluatedHeight = (worldHeight) + 300;
 				Vector3 normal = normals[x, y];
 				float slope = Vector3.Angle(normal, Vector3.up);
 
@@ -282,7 +281,7 @@ public class MapGenerator : MonoBehaviour
 						if (UnityEngine.Random.value < rule.density * placementThreshold)
 						{
 							// Calculate world position
-							Vector3 position = new Vector3(x * 50, evaluatedHeight, y * 50) + positionOffset;
+							Vector3 position = new Vector3(x, evaluatedHeight, y) + positionOffset;
 
 							// Add random offset within the cell
 							position += new Vector3(
