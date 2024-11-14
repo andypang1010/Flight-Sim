@@ -15,6 +15,15 @@
                     "initialStateCheck": true
                 },
                 {
+                    "name": "Look",
+                    "type": "Value",
+                    "id": "f77a9b3e-4577-432d-adac-c5cd7e30e077",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "Flap",
                     "type": "Button",
                     "id": "b3ff4783-934e-4fa1-97db-14f4ae467a35",
@@ -315,6 +324,72 @@
                     "action": "Flap",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a9cf449f-3d2c-4521-a2ef-8df5566221b3",
+                    "path": "<Gamepad>/rightStick",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Look",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "39358f74-69ec-4f2c-b054-57ffe3934266",
+                    "path": "<Pointer>/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Look",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "51ba2dcd-1170-4226-98ed-26c8d0295891",
+                    "path": "<Joystick>/{Hatswitch}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Look",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "Custom Joystick",
+                    "id": "244a9967-3fa1-46b7-8457-0c6d1b3e384f",
+                    "path": "CustomJoystick",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Look",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "xAxis",
+                    "id": "a51531b6-a901-492c-9c8f-3a6b60ca68cf",
+                    "path": "<HID::Performance Designed Products Wireless Controller for PS3>/z",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Look",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "yAxis",
+                    "id": "ca29af60-864f-4411-9530-3700a838fbea",
+                    "path": "<HID::Performance Designed Products Wireless Controller for PS3>/rz",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Look",
+                    "isComposite": false,
+                    "isPartOfComposite": true
                 }
             ]
         }
