@@ -6,6 +6,15 @@
             "id": "3018ec84-8948-4419-846a-027cbfba0418",
             "actions": [
                 {
+                    "name": "Move",
+                    "type": "Value",
+                    "id": "0b892844-d43d-48a2-906b-950e7234e2c5",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "Flap",
                     "type": "Button",
                     "id": "b3ff4783-934e-4fa1-97db-14f4ae467a35",
@@ -40,56 +49,9 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
-                },
-                {
-                    "name": "Left",
-                    "type": "Button",
-                    "id": "e8f1be36-0463-4dc5-a2f6-509fc34ea4ca",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Right",
-                    "type": "Button",
-                    "id": "3bd811ef-408e-447a-aafe-f2ae6ea6dd8b",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Forward",
-                    "type": "Button",
-                    "id": "992fc061-8a97-45a4-8fdf-a39b8a50af6b",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Back",
-                    "type": "Button",
-                    "id": "b655bb78-e700-4da6-a1e9-cf54173f6fe1",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
                 }
             ],
             "bindings": [
-                {
-                    "name": "",
-                    "id": "2e207628-7a60-4aea-bc28-52da7d58b363",
-                    "path": "<Mouse>/leftButton",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Flap",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
                 {
                     "name": "",
                     "id": "8083c8b2-e382-4cd4-97e1-6d29b8c49b3a",
@@ -103,45 +65,23 @@
                 },
                 {
                     "name": "",
-                    "id": "171bcc5d-3c98-4e03-aec0-8607999fcd58",
-                    "path": "<Keyboard>/a",
+                    "id": "2e38a18a-da56-4391-9860-f30d2eddc2fc",
+                    "path": "<Gamepad>/leftTrigger",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Left",
+                    "action": "Dive",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
-                    "id": "8a4399df-7454-4bc2-af6e-9ab324edcf38",
-                    "path": "<Keyboard>/d",
+                    "id": "09e5f0dd-5853-4803-91ab-23ba529e25b4",
+                    "path": "<HID::Performance Designed Products Wireless Controller for PS3>/button7",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Right",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "12389cce-98e7-4088-b8a5-a678595488e1",
-                    "path": "<Keyboard>/w",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Forward",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "3d0529d1-afc7-4bb1-899f-6e2769e5c3e6",
-                    "path": "<Keyboard>/s",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Back",
+                    "action": "Dive",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -158,12 +98,221 @@
                 },
                 {
                     "name": "",
+                    "id": "949b9f9e-bf90-4941-976d-7980e13f2da4",
+                    "path": "<Gamepad>/rightTrigger",
+                    "interactions": "Press(behavior=1)",
+                    "processors": "",
+                    "groups": "",
+                    "action": "FlapRelease",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "cd6aebfd-1266-4643-8273-d58cd5fadcd5",
+                    "path": "<HID::Performance Designed Products Wireless Controller for PS3>/button8",
+                    "interactions": "Press(behavior=1)",
+                    "processors": "",
+                    "groups": "",
+                    "action": "FlapRelease",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "dd7a737e-5ec9-4468-9f24-cf730971fef2",
                     "path": "<Mouse>/rightButton",
                     "interactions": "Press(behavior=1)",
                     "processors": "",
                     "groups": "",
                     "action": "DiveRelease",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f9849a58-a8fa-420e-a6ad-2d792b7e73c5",
+                    "path": "<Gamepad>/leftTrigger",
+                    "interactions": "Press(behavior=1)",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DiveRelease",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "2308fbcf-9f35-43c9-ac95-ca17073c9ff5",
+                    "path": "<HID::Performance Designed Products Wireless Controller for PS3>/button7",
+                    "interactions": "Press(behavior=1)",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DiveRelease",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "24436c00-59d4-4d3b-8b2f-5979a77f3d59",
+                    "path": "<Gamepad>/leftStick",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "WASD",
+                    "id": "cc3adb73-1976-46a2-9f1e-5d25abc2f4d2",
+                    "path": "Dpad",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "up",
+                    "id": "d451c7be-18a3-4186-92d0-c8ab0ba81776",
+                    "path": "<Keyboard>/w",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "up",
+                    "id": "c75375b3-03e0-4ff6-8ae9-9bc0a63237a3",
+                    "path": "<Keyboard>/upArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "down",
+                    "id": "ef3835b9-1e3e-47bd-9b97-826a1a2851c1",
+                    "path": "<Keyboard>/s",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "down",
+                    "id": "4ccfc780-48f8-42d0-a684-4a03e1ca2e22",
+                    "path": "<Keyboard>/downArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "left",
+                    "id": "7bc0bfa7-1378-4e1b-ad5c-48dd8761e795",
+                    "path": "<Keyboard>/a",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "left",
+                    "id": "bbce2bda-ceaa-4d6a-827f-b4c72ba7bef1",
+                    "path": "<Keyboard>/leftArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "right",
+                    "id": "850355e5-356c-46fe-9f57-ebfbdfc065c8",
+                    "path": "<Keyboard>/d",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "right",
+                    "id": "0a2d0647-ea82-4354-a501-186f6e846b3e",
+                    "path": "<Keyboard>/rightArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "b521d9f1-a657-481f-8a9a-d8cf7ff79c75",
+                    "path": "<XRController>/{Primary2DAxis}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8d7b7670-4541-43e7-a54e-bfe90f5348d5",
+                    "path": "<Joystick>/stick",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "2e207628-7a60-4aea-bc28-52da7d58b363",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Flap",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5bd7be0f-a693-433b-ae3f-c90f089287d1",
+                    "path": "<Gamepad>/rightTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Flap",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7d2795da-4e93-4d67-946c-033b3fc8d472",
+                    "path": "<HID::Performance Designed Products Wireless Controller for PS3>/button8",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Flap",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
