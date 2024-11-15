@@ -1,8 +1,7 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Quaternion = UnityEngine.Quaternion;
 
 public class BirdController : MonoBehaviour
 {
@@ -23,7 +22,6 @@ public class BirdController : MonoBehaviour
     private Animator animator;
     private Rigidbody rb;
     private PlayerInput playerInput;
-    private Transform eagleCenter;
 
     private BirdState state;
 
@@ -34,7 +32,6 @@ public class BirdController : MonoBehaviour
         animator = GetComponent<Animator>();
         rb = GetComponent<Rigidbody>();
         playerInput = GetComponent<PlayerInput>();
-        eagleCenter = GameObject.Find("Eagle_Normal").transform;
 
         state = BirdState.Ground;
     }
@@ -83,6 +80,8 @@ public class BirdController : MonoBehaviour
 
     void GetFlapDirection()
     {
+        //reset rotation
+
         Vector2 horizontalInput = playerInput.actions["Move"].ReadValue<Vector2>();
         Vector3 horizontalInput3D = new Vector3(horizontalInput.x, 0, horizontalInput.y);
 
@@ -121,9 +120,15 @@ public class BirdController : MonoBehaviour
             glideScale = .5f;
         }
 
-        if (Math.Abs(transform.rotation.eulerAngles.z) <= 20)
+        print(transform.rotation.eulerAngles.z);
+        if (Math.Abs(transform.rotation.eulerAngles.z - 180) >= 160f && Math.Abs(horizontalInput.x) >= .35f)
         {
-            //transform.RotateAround(eagleCenter.position, Vector3.forward, -Math.Sign(horizontalInput.x));
+            Vector3 rotateAroundPoint = transform.position + new Vector3(0, 3, 0);
+            transform.RotateAround(rotateAroundPoint, Vector3.forward, -Math.Sign(horizontalInput.x));
+            if (Math.Abs(transform.rotation.eulerAngles.z - 180) < 160f)
+            {
+                transform.rotation = Quaternion.Euler(0, 0, Math.Sign(transform.rotation.eulerAngles.z - 180) * 160 + 180);
+            }
         }
 
         rb.AddForce(Vector3.forward * 5 * glideScale, ForceMode.Acceleration);
