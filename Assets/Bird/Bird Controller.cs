@@ -1,4 +1,5 @@
 using System;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Quaternion = UnityEngine.Quaternion;
@@ -13,8 +14,9 @@ public class BirdController : MonoBehaviour
 
     [SerializeField] private float flapTerminalX = 5f;
     [SerializeField] private float flapTerminalY = 8f;
-    [SerializeField] private float glideTerminalX = 20f;
+    [SerializeField] private float glideTerminalX = 5f;
     [SerializeField] private float gildeTerminalY = -1f;
+    [SerializeField] private float gildeTerminalZ = 20f;
     [SerializeField] private float diveTerminalX = 2f;
     [SerializeField] private float diveTerminalY = -10f;
 
@@ -29,7 +31,7 @@ public class BirdController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        animator = GetComponent<Animator>();
+        animator = GetComponentInChildren<Animator>();
         rb = GetComponent<Rigidbody>();
         playerInput = GetComponent<PlayerInput>();
 
@@ -80,8 +82,6 @@ public class BirdController : MonoBehaviour
 
     void GetFlapDirection()
     {
-        //reset rotation
-
         Vector2 horizontalInput = playerInput.actions["Move"].ReadValue<Vector2>();
         Vector3 horizontalInput3D = new Vector3(horizontalInput.x, 0, horizontalInput.y);
 
@@ -107,39 +107,77 @@ public class BirdController : MonoBehaviour
 
     void GetGlideDirection()
     {
+        float xRot = transform.rotation.eulerAngles.x;
+        float yRot = transform.rotation.eulerAngles.y;
+        float zRot = transform.rotation.eulerAngles.z;
+
         float glideScale = 1;
         Vector2 horizontalInput = playerInput.actions["Move"].ReadValue<Vector2>();
         Vector3 horizontalInput3D = new Vector3(horizontalInput.x, 0, horizontalInput.y);
 
-        if (horizontalInput.y > 0)
+        if (Math.Abs(horizontalInput.y) >= .35f)
         {
-            glideScale = 1.5f;
-        }
-        else if (horizontalInput.y < 0)
-        {
-            glideScale = .5f;
-        }
-
-        print(transform.rotation.eulerAngles.z);
-        if (Math.Abs(transform.rotation.eulerAngles.z - 180) >= 160f && Math.Abs(horizontalInput.x) >= .35f)
-        {
-            Vector3 rotateAroundPoint = transform.position + new Vector3(0, 3, 0);
-            transform.RotateAround(rotateAroundPoint, Vector3.forward, -Math.Sign(horizontalInput.x));
-            if (Math.Abs(transform.rotation.eulerAngles.z - 180) < 160f)
+            glideScale = 1 + Math.Sign(horizontalInput.y) / 2;
+            //X Rotation - Nose up/down
+            //160 being weird
+            if (Math.Abs(xRot - 180) >= 159.999f) //between -20 and 20
             {
-                transform.rotation = Quaternion.Euler(0, 0, Math.Sign(transform.rotation.eulerAngles.z - 180) * 160 + 180);
+                xRot += Math.Sign(horizontalInput.y) * .5f;
+                if (Math.Abs(xRot - 180) < 160f) //outside -20 and 20
+                {
+                    xRot = Math.Sign(xRot - 180) * 160 + 180; //clamp
+                }
+            }
+        }
+        else
+        {
+            if (xRot != 0)
+            {
+                int prev = Math.Sign(xRot - 180);
+                xRot += Math.Sign(xRot - 180);
+                if (Math.Sign(xRot - 180) != prev)
+                {
+                    xRot = 0;
+                }
             }
         }
 
+        if (Math.Abs(horizontalInput.x) >= .35f)
+        {
+            //Y rotation - direction facing
+            yRot += horizontalInput.x * .5f;
+
+            //Z rotation - Wing tilt
+            if (Math.Abs(zRot - 180) >= 160f)
+            {
+                zRot -= Math.Sign(horizontalInput.x);
+                if (Math.Abs(zRot - 180) < 160f)
+                {
+                    zRot = Math.Sign(zRot - 180) * 160 + 180;
+                }
+            }
+        }
+        else
+        {
+            if (zRot != 0)
+            {
+                int prev = Math.Sign(zRot - 180);
+                zRot += Math.Sign(zRot - 180);
+                if (Math.Sign(zRot - 180) != prev)
+                {
+                    zRot = 0;
+                }
+            }
+        }
+        transform.rotation = Quaternion.Euler(xRot, yRot, zRot);
+
+        //Need velocty to be facing forward
         rb.AddForce(Vector3.forward * 5 * glideScale, ForceMode.Acceleration);
 
-        Vector2 horizontalVelocity = new(rb.velocity.x, rb.velocity.z);
-        if (horizontalVelocity.magnitude > glideTerminalX)
+        if (rb.velocity.z > gildeTerminalZ)
         {
-            horizontalVelocity = horizontalVelocity.normalized * glideTerminalX;
-            rb.velocity = new Vector3(horizontalVelocity.x, rb.velocity.y, horizontalVelocity.y);
+            rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, gildeTerminalZ);
         }
-
     }
 
 
@@ -149,6 +187,7 @@ public class BirdController : MonoBehaviour
     {
         state = BirdState.Flap;
         rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y * .1f, rb.velocity.z);
+        rb.rotation = Quaternion.Euler(rb.rotation.eulerAngles.x, rb.rotation.eulerAngles.y, 0);
         animator.SetTrigger("Flap");
     }
 
