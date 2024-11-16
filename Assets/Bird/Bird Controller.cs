@@ -12,11 +12,10 @@ public class BirdController : MonoBehaviour
     [SerializeField] private float flapForce = 5f;
 
 
-    [SerializeField] private float flapTerminalX = 5f;
+    [SerializeField] private float flapTerminalXZ = 5f;
     [SerializeField] private float flapTerminalY = 8f;
-    [SerializeField] private float glideTerminalX = 5f;
-    [SerializeField] private float gildeTerminalY = -1f;
-    [SerializeField] private float gildeTerminalZ = 20f;
+    [SerializeField] private float glideTerminalXZ = 20f;
+    [SerializeField] private float glideTerminalY = -1f;
     [SerializeField] private float diveTerminalX = 2f;
     [SerializeField] private float diveTerminalY = -10f;
 
@@ -41,33 +40,18 @@ public class BirdController : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        print(rb.velocity);
+        print(rb.velocity + " , mag: " + rb.velocity.magnitude);
+
+        rb.AddForce(Vector3.down * gravity, ForceMode.Acceleration);
         switch (state)
         {
             case BirdState.Ground:
 
                 break;
             case BirdState.Flap:
-                if (rb.velocity.y < flapTerminalY)
-                {
-                    rb.AddForce(Vector3.up * flapForce, ForceMode.Acceleration);
-                    if (rb.velocity.y > flapTerminalY) rb.velocity = new Vector3(rb.velocity.x, flapTerminalY, rb.velocity.z);
-                }
-
                 GetFlapDirection();
                 break;
             case BirdState.Glide:
-                if (rb.velocity.y > gildeTerminalY)
-                {
-                    rb.AddForce(Vector3.down * gravity, ForceMode.Acceleration);
-                    if (rb.velocity.y < gildeTerminalY) rb.velocity = new Vector3(rb.velocity.x, gildeTerminalY, rb.velocity.z);
-                }
-                else if (rb.velocity.y < gildeTerminalY)
-                {
-                    rb.AddForce(Vector3.up * gravity * 2, ForceMode.Acceleration);
-                    if (rb.velocity.y > gildeTerminalY) rb.velocity = new Vector3(rb.velocity.x, gildeTerminalY, rb.velocity.z);
-                }
-
                 GetGlideDirection();
                 break;
             case BirdState.Dive:
@@ -82,27 +66,35 @@ public class BirdController : MonoBehaviour
 
     void GetFlapDirection()
     {
-        Vector2 horizontalInput = playerInput.actions["Move"].ReadValue<Vector2>();
-        Vector3 horizontalInput3D = new Vector3(horizontalInput.x, 0, horizontalInput.y);
+        if (rb.velocity.y < flapTerminalY)
+        {
+            rb.AddForce(Vector3.up * flapForce, ForceMode.Acceleration);
+            if (rb.velocity.y > flapTerminalY) rb.velocity = new Vector3(rb.velocity.x, flapTerminalY, rb.velocity.z);
+        }
 
-        if (horizontalInput3D != Vector3.zero)
+        Vector2 horizontalInput = playerInput.actions["Move"].ReadValue<Vector2>();
+        Vector3 horizontalInput3D = transform.forward * horizontalInput.y + transform.right * horizontalInput.x;
+
+        Vector2 horizontalVelocity = new(rb.velocity.x, rb.velocity.z);
+        Vector3 horizontalVelocity3D = transform.forward * rb.velocity.z + transform.right * rb.velocity.x;
+
+        if (horizontalInput != Vector2.zero)
         {
             rb.AddForce(horizontalInput3D * flapForce, ForceMode.Acceleration);
         }
         else
         {
-            float damp = .9f;
-            rb.velocity = new Vector3(rb.velocity.x * damp, rb.velocity.y, rb.velocity.z * damp);
+            rb.AddForce(-horizontalVelocity3D * flapForce * .1f, ForceMode.Acceleration);
+        }
+
+        if (horizontalVelocity.magnitude > flapTerminalXZ)
+        {
+            //float damp = .99f;
+            //rb.velocity = new Vector3(rb.velocity.x * damp, rb.velocity.y, rb.velocity.z * damp);
         }
 
         //transform.rotation = Quaternion.Euler(0, 0, horizontalInput3D.x * -20);
 
-        Vector2 horizontalVelocity = new(rb.velocity.x, rb.velocity.z);
-        if (horizontalVelocity.magnitude > flapTerminalX)
-        {
-            horizontalVelocity = horizontalVelocity.normalized * flapTerminalX;
-            rb.velocity = new Vector3(horizontalVelocity.x, rb.velocity.y, horizontalVelocity.y);
-        }
     }
 
     void GetGlideDirection()
@@ -113,11 +105,10 @@ public class BirdController : MonoBehaviour
 
         float glideScale = 1;
         Vector2 horizontalInput = playerInput.actions["Move"].ReadValue<Vector2>();
-        Vector3 horizontalInput3D = new Vector3(horizontalInput.x, 0, horizontalInput.y);
 
         if (Math.Abs(horizontalInput.y) >= .35f)
         {
-            glideScale = 1 + Math.Sign(horizontalInput.y) / 2;
+            glideScale += Math.Sign(horizontalInput.y) > 0 ? 1 / 10f : -1 / 30f;
             //X Rotation - Nose up/down
             //160 being weird
             if (Math.Abs(xRot - 180) >= 159.999f) //between -20 and 20
@@ -171,12 +162,21 @@ public class BirdController : MonoBehaviour
         }
         transform.rotation = Quaternion.Euler(xRot, yRot, zRot);
 
-        //Need velocty to be facing forward
-        rb.AddForce(Vector3.forward * 5 * glideScale, ForceMode.Acceleration);
-
-        if (rb.velocity.z > gildeTerminalZ)
+        if (rb.velocity.y < glideTerminalY)
         {
-            rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, gildeTerminalZ);
+            rb.AddForce(Vector3.up * gravity, ForceMode.Acceleration);
+            //if (rb.velocity.y > gildeTerminalY) rb.velocity = new Vector3(rb.velocity.x, gildeTerminalY, rb.velocity.z);
+        }
+
+        //Need velocty to be facing forward
+        rb.velocity = transform.forward * rb.velocity.magnitude;
+        rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y * glideScale, rb.velocity.z);
+
+        Vector2 horizontalVelocity = new(rb.velocity.x, rb.velocity.z);
+        if (horizontalVelocity.magnitude > glideTerminalXZ)
+        {
+            horizontalVelocity = horizontalVelocity.normalized * glideTerminalXZ;
+            rb.velocity = new Vector3(horizontalVelocity.x, rb.velocity.y, horizontalVelocity.y);
         }
     }
 
