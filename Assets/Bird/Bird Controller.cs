@@ -76,7 +76,7 @@ public class BirdController : MonoBehaviour
         Vector3 horizontalInput3D = transform.forward * horizontalInput.y + transform.right * horizontalInput.x;
 
         Vector2 horizontalVelocity = new(rb.velocity.x, rb.velocity.z);
-        Vector3 horizontalVelocity3D = transform.forward * rb.velocity.z + transform.right * rb.velocity.x;
+        Vector3 horizontalVelocity3D = new(rb.velocity.x, 0, rb.velocity.z);
 
         if (horizontalInput != Vector2.zero)
         {
@@ -89,8 +89,8 @@ public class BirdController : MonoBehaviour
 
         if (horizontalVelocity.magnitude > flapTerminalXZ)
         {
-            //float damp = .99f;
-            //rb.velocity = new Vector3(rb.velocity.x * damp, rb.velocity.y, rb.velocity.z * damp);
+            float damp = .995f;
+            rb.velocity = new Vector3(rb.velocity.x * damp, rb.velocity.y, rb.velocity.z * damp);
         }
 
         //transform.rotation = Quaternion.Euler(0, 0, horizontalInput3D.x * -20);
