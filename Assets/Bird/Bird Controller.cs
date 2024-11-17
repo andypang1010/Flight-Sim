@@ -14,10 +14,17 @@ public class BirdController : MonoBehaviour
 
     [SerializeField] private float flapTerminalXZ = 5f;
     [SerializeField] private float flapTerminalY = 8f;
+
+
     [SerializeField] private float glideTerminalXZ = 20f;
     [SerializeField] private float glideTerminalY = -1f;
-    [SerializeField] private float diveTerminalX = 2f;
+
+
+    [SerializeField] private float diveTerminalXZ = 5f;
     [SerializeField] private float diveTerminalY = -10f;
+    [SerializeField] private float diveForceXZ = 5f;
+    [SerializeField] private float diveForceY = 30f;
+
 
 
     private Animator animator;
@@ -42,62 +49,79 @@ public class BirdController : MonoBehaviour
     {
         print(rb.velocity + " , mag: " + rb.velocity.magnitude);
 
-        rb.AddForce(Vector3.down * gravity, ForceMode.Acceleration);
         switch (state)
         {
             case BirdState.Ground:
 
                 break;
             case BirdState.Flap:
-                GetFlapDirection();
+                FlapMovement();
                 break;
             case BirdState.Glide:
-                GetGlideDirection();
+                GlideMovement();
                 break;
             case BirdState.Dive:
-                if (rb.velocity.y > diveTerminalY)
-                {
-                    rb.AddForce(Vector3.down * gravity * 10, ForceMode.Acceleration);
-                    if (rb.velocity.y < diveTerminalY) rb.velocity = new Vector3(rb.velocity.x, diveTerminalY, rb.velocity.z);
-                }
+                DiveMovement();
                 break;
         }
     }
 
-    void GetFlapDirection()
+    void FlapMovement()
     {
+        //Vertical force
         if (rb.velocity.y < flapTerminalY)
         {
             rb.AddForce(Vector3.up * flapForce, ForceMode.Acceleration);
             if (rb.velocity.y > flapTerminalY) rb.velocity = new Vector3(rb.velocity.x, flapTerminalY, rb.velocity.z);
         }
 
+        //Horizontal force
         Vector2 horizontalInput = playerInput.actions["Move"].ReadValue<Vector2>();
         Vector3 horizontalInput3D = transform.forward * horizontalInput.y + transform.right * horizontalInput.x;
 
         Vector2 horizontalVelocity = new(rb.velocity.x, rb.velocity.z);
         Vector3 horizontalVelocity3D = new(rb.velocity.x, 0, rb.velocity.z);
 
-        if (horizontalInput != Vector2.zero)
+        if (horizontalInput == Vector2.zero || horizontalVelocity.magnitude > flapTerminalXZ)
         {
-            rb.AddForce(horizontalInput3D * flapForce, ForceMode.Acceleration);
+            rb.AddForce(-horizontalVelocity3D * flapForce * .03f, ForceMode.Acceleration);
         }
         else
         {
-            rb.AddForce(-horizontalVelocity3D * flapForce * .1f, ForceMode.Acceleration);
+            rb.AddForce(horizontalInput3D * flapForce, ForceMode.Acceleration);
         }
 
-        if (horizontalVelocity.magnitude > flapTerminalXZ)
+        //Z Rotation
+        float zRot = transform.rotation.eulerAngles.z;
+        if (Math.Abs(horizontalInput.x) >= .35f)
         {
-            float damp = .995f;
-            rb.velocity = new Vector3(rb.velocity.x * damp, rb.velocity.y, rb.velocity.z * damp);
+            //Z rotation - Wing tilt
+            if (Math.Abs(zRot - 180) >= 170f)
+            {
+                zRot -= Math.Sign(horizontalInput.x);
+                if (Math.Abs(zRot - 180) < 170f)
+                {
+                    zRot = Math.Sign(zRot - 180) * 170 + 180;
+                }
+            }
         }
-
-        //transform.rotation = Quaternion.Euler(0, 0, horizontalInput3D.x * -20);
+        else
+        {
+            if (zRot != 0)
+            {
+                int prev = Math.Sign(zRot - 180);
+                zRot += Math.Sign(zRot - 180);
+                if (Math.Sign(zRot - 180) != prev)
+                {
+                    zRot = 0;
+                }
+            }
+        }
+        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, zRot);
 
     }
 
-    void GetGlideDirection()
+    void GlideMovement()
     {
         float xRot = transform.rotation.eulerAngles.x;
         float yRot = transform.rotation.eulerAngles.y;
@@ -162,21 +186,46 @@ public class BirdController : MonoBehaviour
         }
         transform.rotation = Quaternion.Euler(xRot, yRot, zRot);
 
-        if (rb.velocity.y < glideTerminalY)
-        {
-            rb.AddForce(Vector3.up * gravity, ForceMode.Acceleration);
-            //if (rb.velocity.y > gildeTerminalY) rb.velocity = new Vector3(rb.velocity.x, gildeTerminalY, rb.velocity.z);
-        }
-
         //Need velocty to be facing forward
         rb.velocity = transform.forward * rb.velocity.magnitude;
-        rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y * glideScale, rb.velocity.z);
+        rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y * glideScale - .3f, rb.velocity.z);
 
         Vector2 horizontalVelocity = new(rb.velocity.x, rb.velocity.z);
         if (horizontalVelocity.magnitude > glideTerminalXZ)
         {
             horizontalVelocity = horizontalVelocity.normalized * glideTerminalXZ;
-            rb.velocity = new Vector3(horizontalVelocity.x, rb.velocity.y, horizontalVelocity.y);
+            //rb.velocity = new Vector3(horizontalVelocity.x, rb.velocity.y, horizontalVelocity.y);
+        }
+    }
+
+    void DiveMovement()
+    {
+        //damp previous XZ velocity
+        //rb.velocity = new Vector3(rb.velocity.x * .8f, rb.velocity.y, rb.velocity.z * .8f);
+
+        //Add downward force
+        if (rb.velocity.y > diveTerminalY)
+        {
+            rb.AddForce(Vector3.down * diveForceY, ForceMode.Acceleration);
+            if (rb.velocity.y < diveTerminalY) rb.velocity = new Vector3(rb.velocity.x, diveTerminalY, rb.velocity.z);
+        }
+
+        //Add XZ force
+        Vector2 horizontalInput = playerInput.actions["Move"].ReadValue<Vector2>();
+        Vector3 horizontalInput3D = transform.forward * horizontalInput.y + transform.right * horizontalInput.x;
+
+        Vector2 horizontalVelocity = new(rb.velocity.x, rb.velocity.z);
+        Vector3 horizontalVelocity3D = new(rb.velocity.x, 0, rb.velocity.z);
+
+        if (horizontalInput == Vector2.zero || horizontalVelocity.magnitude > diveTerminalXZ)
+        {
+            rb.AddForce(-horizontalVelocity3D * diveForceXZ * .1f, ForceMode.Acceleration);
+
+        }
+        else
+        {
+            rb.AddForce(horizontalInput3D * diveForceXZ, ForceMode.Acceleration);
+
         }
     }
 
