@@ -9,7 +9,7 @@ public class MapGenerator : MonoBehaviour {
 
 	public enum DrawMode {NoiseMap, ColourMap, Mesh, FalloffMap};
 	public DrawMode drawMode;
-	public HeightmapToSplatmapExporter exporter;
+	public SplatmapGenerator splatmapGenerator;
 
 	public Noise.NormalizeMode normalizeMode;
 
@@ -107,18 +107,16 @@ public class MapGenerator : MonoBehaviour {
 
 	MapData GenerateMapData(Vector2 centre) {
 		float[,] noiseMap = Noise.GenerateNoiseMap (mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistance, lacunarity, centre + offset, normalizeMode);
-		Texture2D heightMapTexture = new Texture2D(mapChunkSize, mapChunkSize, TextureFormat.RGBA32, false);
-
+		Texture2D heightMap = new Texture2D(mapChunkSize, mapChunkSize, TextureFormat.RGBA32, false);
 		Color[] colourMap = new Color[mapChunkSize * mapChunkSize];
 		for (int y = 0; y < mapChunkSize; y++) {
 			for (int x = 0; x < mapChunkSize; x++) {
 				if (useFalloff) {
 					noiseMap [x, y] = Mathf.Clamp01(noiseMap [x, y] - falloffMap [x, y]);
 				}
-				Color noiseColor = new Color(noiseMap[x,y], noiseMap[x,y], noiseMap[x,y]);
-				heightMapTexture.SetPixel(x, y, noiseColor);
-
 				float currentHeight = noiseMap [x, y];
+				Color pixelColor = Color.white * currentHeight;
+				heightMap.SetPixel(x, y, pixelColor);
 				for (int i = 0; i < regions.Length; i++) {
 					if (currentHeight >= regions [i].height) {
 						colourMap [y * mapChunkSize + x] = regions [i].colour;
@@ -127,15 +125,16 @@ public class MapGenerator : MonoBehaviour {
 					}
 				}
 			}
+
+			heightMap.Apply();
+
+			byte[] bytes = heightMap.EncodeToPNG();
+			File.WriteAllBytes(Application.dataPath + "/Height Map.png", bytes);
+
+			splatmapGenerator.maxHeight = meshHeightMultiplier;
+			splatmapGenerator.ExportSplatmap();
 		}
 
-		heightMapTexture.Apply();
-		exporter.ExportSplatmap();
-
-		byte[] bytes = heightMapTexture.EncodeToPNG();
-		print(Application.dataPath);
-        File.WriteAllBytes(Application.dataPath + "/HeightMapTexture.png", bytes);
-        Debug.Log("HeightMap exported as HeightMapTexture.png");
 
 		return new MapData (noiseMap, colourMap);
 	}
