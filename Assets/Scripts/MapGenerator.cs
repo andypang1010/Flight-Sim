@@ -296,7 +296,7 @@ public class MapGenerator : MonoBehaviour
 							GameObject vegetation = Instantiate(
 											rule.prefab,
 											position,
-											Quaternion.Euler(0, 0, 0),
+											Quaternion.Euler(0, UnityEngine.Random.Range(0, 360), 0),
 											vegetationParent
 							);
 
