@@ -194,7 +194,7 @@ public class BirdController : MonoBehaviour
         if (horizontalVelocity.magnitude > glideTerminalXZ)
         {
             horizontalVelocity = horizontalVelocity.normalized * glideTerminalXZ;
-            //rb.velocity = new Vector3(horizontalVelocity.x, rb.velocity.y, horizontalVelocity.y);
+            rb.velocity = new Vector3(horizontalVelocity.x, rb.velocity.y, horizontalVelocity.y);
         }
     }
 
