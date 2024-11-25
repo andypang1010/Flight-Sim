@@ -1,0 +1,111 @@
+#pragma kernel CSWorley3D
+#pragma kernel CSRemapPerlin
+
+// adapted from https://github.com/jushii/WorleyNoise
+
+// cellResolution = resolution / axisCellCount
+int resolution; // pixels total
+int axisCellCount; // cells per image axis
+float4 channelMask;
+StructuredBuffer<float3> featurePoints1;
+StructuredBuffer<float3> featurePoints2;
+StructuredBuffer<float3> featurePoints3;
+
+RWTexture3D<float4> Result;
+Texture3D PerlinNoise;
+
+
+static const int3 CellOffsets[] =
+{
+    int3(-1, -1, -1),
+    int3(0, -1, -1),
+    int3(1, -1, -1),
+    int3(-1, -1, 0),
+    int3(0, -1, 0),
+    int3(1, -1, 0),
+    int3(-1, -1, 1),
+    int3(0, -1, 1),
+    int3(1, -1, 1),
+    int3(-1, 0, -1),
+    int3(0, 0, -1),
+    int3(1, 0, -1),
+    int3(-1, 0, 0),
+    int3(0, 0, 0),
+    int3(1, 0, 0),
+    int3(-1, 0, 1),
+    int3(0, 0, 1),
+    int3(1, 0, 1),
+    int3(-1, 1, -1),
+    int3(0, 1, -1),
+    int3(1, 1, -1),
+    int3(-1, 1, 0),
+    int3(0, 1, 0),
+    int3(1, 1, 0),
+    int3(-1, 1, 1),
+    int3(0, 1, 1),
+    int3(1, 1, 1),
+};
+
+float Worley (StructuredBuffer<float3> featurePoints, int axisCellCount, uint3 id)
+{
+    int cellResolution = resolution / axisCellCount;
+    
+    float3 samplePosition = float3(id.x, id.y, id.z);
+    int3 sampleCellCoordinate = floor(samplePosition / cellResolution);
+    float3 sampleCellPosition = float3(samplePosition / cellResolution);
+
+    // Find the feature point nearest to the sample position by searching the surrounding cells.
+    // This search will also include the cell the sample position belongs to.
+    float minDistance = 1.0;
+    for (int offsetIndex = 0; offsetIndex < 27; offsetIndex++)
+    {
+        int3 cellCoordinate = sampleCellCoordinate + CellOffsets[offsetIndex];        
+        int x = cellCoordinate.x;
+        int y = cellCoordinate.y;
+        int z = cellCoordinate.z;
+        
+        // Check if the checked cell coordinates are outside the "cell map" boundaries.
+        if (x == -1 || x == axisCellCount || y == -1 || y == axisCellCount || z == -1 || z == axisCellCount)
+        {
+            // Wrap around the cell grid to find the distance to a feature point in a cell on the opposite side.
+            int3 wrappedCellCoordinate = fmod(cellCoordinate + axisCellCount, (int3)axisCellCount);
+            int wrappedCellIndex = wrappedCellCoordinate.x + axisCellCount * (wrappedCellCoordinate.y + wrappedCellCoordinate.z * axisCellCount);
+            float3 featurePointPosition = cellCoordinate + featurePoints[wrappedCellIndex];
+            minDistance = min(minDistance, distance(sampleCellPosition, featurePointPosition));
+        }
+        else
+        {
+            // The checked cell is inside the "cell map" boundaries. Check the distance to the feature point.
+            int cellIndex = cellCoordinate.x + axisCellCount * (cellCoordinate.y + cellCoordinate.z * axisCellCount);
+            float3 featurePointPosition = cellCoordinate + featurePoints[cellIndex];
+            minDistance = min(minDistance, distance(sampleCellPosition, featurePointPosition));
+        }
+    }
+
+    return 1.0 - minDistance;
+}
+
+[numthreads(8,8,8)]
+void CSWorley3D(uint3 id : SV_DispatchThreadID)
+{
+    float worley1 = Worley(featurePoints1, axisCellCount, id);
+    float worley2 = Worley(featurePoints2, axisCellCount * 2, id);
+    float worley3 = Worley(featurePoints3, axisCellCount * 4, id);
+
+    float worley = worley1 * 0.625 + worley2 * 0.25 + worley3 * 0.125;
+
+    Result[id.xyz] = Result[id.xyz] * (1 - channelMask) + worley * channelMask;
+}
+
+float remap(float value, float fromMin, float fromMax, float toMin, float toMax)
+{
+    return toMin + (value - fromMin) * (toMax - toMin) / (fromMax - fromMin);
+}
+
+[numthreads(8,8,8)]
+void CSRemapPerlin(uint3 id : SV_DispatchThreadID)
+{
+    float perlin = PerlinNoise[id.xyz] * channelMask;
+    float worley = Result[id.xyz] * channelMask;
+    Result[id.xyz] = Result[id.xyz] * (1 - channelMask) + remap(perlin, worley - 1, 1, 0, 1) * channelMask;
+}
