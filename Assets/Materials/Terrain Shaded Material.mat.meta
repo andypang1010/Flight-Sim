@@ -1,6 +1,11 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Scenes/Bird.unity.meta
+guid: 55a340f2459304687b59fa4d031c6976
+DefaultImporter:
+========
 guid: f7e4ddd5e5af3e6419b926ed58e5bcde
 NativeFormatImporter:
+>>>>>>>> main:Assets/Materials/Terrain Shaded Material.mat.meta
   externalObjects: {}
   mainObjectFileID: 2100000
   userData: 
