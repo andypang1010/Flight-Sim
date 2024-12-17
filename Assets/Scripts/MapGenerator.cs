@@ -3,6 +3,7 @@ using System.Collections;
 using System;
 using System.Threading;
 using System.Collections.Generic;
+using System.IO;
 
 
 public class MapGenerator : MonoBehaviour
@@ -10,7 +11,7 @@ public class MapGenerator : MonoBehaviour
 
 	public enum DrawMode { NoiseMap, ColourMap, Mesh, FalloffMap };
 	public DrawMode drawMode;
-
+	SplatmapGenerator splatmapGenerator;
 	public Noise.NormalizeMode normalizeMode;
 
 	public const int mapChunkSize = 241;
@@ -52,6 +53,7 @@ public class MapGenerator : MonoBehaviour
 	void Awake()
 	{
 		falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize);
+		splatmapGenerator = GetComponent<SplatmapGenerator>();
 	}
 
 	public void DrawMapInEditor()
@@ -167,7 +169,7 @@ public class MapGenerator : MonoBehaviour
 	MapData GenerateMapData(Vector2 centre)
 	{
 		float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistance, lacunarity, centre + offset, normalizeMode);
-
+		Texture2D heightMap = new Texture2D(mapChunkSize, mapChunkSize, TextureFormat.RGBA32, false);
 		Color[] colourMap = new Color[mapChunkSize * mapChunkSize];
 		for (int y = 0; y < mapChunkSize; y++)
 		{
@@ -178,6 +180,8 @@ public class MapGenerator : MonoBehaviour
 					noiseMap[x, y] = Mathf.Clamp01(noiseMap[x, y] - falloffMap[x, y]);
 				}
 				float currentHeight = noiseMap[x, y];
+				Color pixelColor = Color.white * currentHeight;
+				heightMap.SetPixel(x, y, pixelColor);
 				for (int i = 0; i < regions.Length; i++)
 				{
 					if (currentHeight >= regions[i].height)
@@ -191,6 +195,14 @@ public class MapGenerator : MonoBehaviour
 				}
 			}
 		}
+
+		heightMap.Apply();
+
+		byte[] bytes = heightMap.EncodeToPNG();
+		File.WriteAllBytes(Application.dataPath + "/Height Map.png", bytes);
+
+		splatmapGenerator.maxHeight = meshHeightMultiplier;
+		splatmapGenerator.ExportSplatmap();
 
 		return new MapData(noiseMap, colourMap);
 	}
