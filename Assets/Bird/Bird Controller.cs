@@ -42,12 +42,15 @@ public class BirdController : MonoBehaviour
         playerInput = GetComponent<PlayerInput>();
 
         state = BirdState.Ground;
+
+        //Setup input
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
-        print(rb.velocity + " , mag: " + rb.velocity.magnitude);
+        print(rb.velocity + " , mag: " + rb.velocity.magnitude + ", horiz:" + new Vector2(rb.velocity.x, rb.velocity.z).magnitude);
 
         switch (state)
         {
@@ -82,13 +85,25 @@ public class BirdController : MonoBehaviour
         Vector2 horizontalVelocity = new(rb.velocity.x, rb.velocity.z);
         Vector3 horizontalVelocity3D = new(rb.velocity.x, 0, rb.velocity.z);
 
-        if (horizontalInput == Vector2.zero || horizontalVelocity.magnitude > flapTerminalXZ)
+        if (horizontalInput != Vector2.zero)
         {
-            rb.AddForce(-horizontalVelocity3D * flapForce * .03f, ForceMode.Acceleration);
+            //need to do this because AddForce doesn't immediatey update velocity vec
+            Vector3 newVelocity = horizontalVelocity3D + horizontalInput3D * flapForce / rb.mass * Time.fixedDeltaTime;
+            Vector2 newHoriz = new Vector2(newVelocity.x, newVelocity.z);
+
+            if (newHoriz.magnitude < flapTerminalXZ)
+            {
+                rb.AddForce(horizontalInput3D * flapForce, ForceMode.Acceleration);
+            }
+            else
+            {
+                horizontalVelocity = newHoriz.normalized * horizontalVelocity.magnitude;
+                rb.velocity = new Vector3(horizontalVelocity.x, rb.velocity.y, horizontalVelocity.y);
+            }
         }
         else
         {
-            rb.AddForce(horizontalInput3D * flapForce, ForceMode.Acceleration);
+            rb.AddForce(-horizontalVelocity3D * flapForce * .03f, ForceMode.Acceleration);
         }
 
         //Z Rotation
