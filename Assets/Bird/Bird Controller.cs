@@ -8,7 +8,6 @@ public class BirdController : MonoBehaviour
 {
     enum BirdState { Ground, Flap, Glide, Dive }
 
-    [SerializeField] private float gravity = 3f;
     [SerializeField] private float flapForce = 5f;
 
 
@@ -17,7 +16,7 @@ public class BirdController : MonoBehaviour
 
 
     [SerializeField] private float glideTerminalXZ = 20f;
-    [SerializeField] private float glideTerminalY = -1f;
+    [SerializeField] private float glideTerminalY = -17f;
 
 
     [SerializeField] private float diveTerminalXZ = 5f;
@@ -71,52 +70,28 @@ public class BirdController : MonoBehaviour
 
     void FlapMovement()
     {
-        //Vertical force
-        if (rb.velocity.y < flapTerminalY)
-        {
-            rb.AddForce(Vector3.up * flapForce, ForceMode.Acceleration);
-            if (rb.velocity.y > flapTerminalY) rb.velocity = new Vector3(rb.velocity.x, flapTerminalY, rb.velocity.z);
-        }
+        float xRot = transform.rotation.eulerAngles.x;
+        float yRot = transform.rotation.eulerAngles.y;
+        float zRot = transform.rotation.eulerAngles.z;
 
-        //Horizontal force
         Vector2 horizontalInput = playerInput.actions["Move"].ReadValue<Vector2>();
         Vector3 horizontalInput3D = transform.forward * horizontalInput.y + transform.right * horizontalInput.x;
 
         Vector2 horizontalVelocity = new(rb.velocity.x, rb.velocity.z);
         Vector3 horizontalVelocity3D = new(rb.velocity.x, 0, rb.velocity.z);
 
-        if (horizontalInput != Vector2.zero)
-        {
-            //need to do this because AddForce doesn't immediatey update velocity vec
-            Vector3 newVelocity = horizontalVelocity3D + horizontalInput3D * flapForce / rb.mass * Time.fixedDeltaTime;
-            Vector2 newHoriz = new Vector2(newVelocity.x, newVelocity.z);
-
-            if (newHoriz.magnitude < flapTerminalXZ)
-            {
-                rb.AddForce(horizontalInput3D * flapForce, ForceMode.Acceleration);
-            }
-            else
-            {
-                horizontalVelocity = newHoriz.normalized * horizontalVelocity.magnitude;
-                rb.velocity = new Vector3(horizontalVelocity.x, rb.velocity.y, horizontalVelocity.y);
-            }
-        }
-        else
-        {
-            rb.AddForce(-horizontalVelocity3D * flapForce * .03f, ForceMode.Acceleration);
-        }
-
-        //Z Rotation
-        float zRot = transform.rotation.eulerAngles.z;
         if (Math.Abs(horizontalInput.x) >= .35f)
         {
+            //Y rotation - direction facing
+            yRot += horizontalInput.x * .5f;
+
             //Z rotation - Wing tilt
-            if (Math.Abs(zRot - 180) >= 170f)
+            if (Math.Abs(zRot - 180) >= 160f)
             {
                 zRot -= Math.Sign(horizontalInput.x);
-                if (Math.Abs(zRot - 180) < 170f)
+                if (Math.Abs(zRot - 180) < 160f)
                 {
-                    zRot = Math.Sign(zRot - 180) * 170 + 180;
+                    zRot = Math.Sign(zRot - 180) * 160 + 180;
                 }
             }
         }
@@ -132,8 +107,52 @@ public class BirdController : MonoBehaviour
                 }
             }
         }
-        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, zRot);
+        transform.rotation = Quaternion.Euler(xRot, yRot, zRot);
 
+        //Horizontal force
+
+        //OMNI
+        // if (horizontalInput != Vector2.zero)
+        // {
+        //     //need to do this because AddForce doesn't immediatey update velocity vec
+        //     Vector3 newVelocity = horizontalVelocity3D + horizontalInput3D * flapForce / rb.mass * Time.fixedDeltaTime;
+        //     Vector2 newHoriz = new Vector2(newVelocity.x, newVelocity.z);
+
+        //     if (newHoriz.magnitude < flapTerminalXZ)
+        //     {
+        //         rb.AddForce(horizontalInput3D * flapForce, ForceMode.Acceleration);
+        //     }
+        //     else
+        //     {
+        //         horizontalVelocity = newHoriz.normalized * horizontalVelocity.magnitude * .999f;
+        //         rb.velocity = new Vector3(horizontalVelocity.x, rb.velocity.y, horizontalVelocity.y);
+        //     }
+        // }
+        // else
+        // {
+        //     rb.AddForce(-horizontalVelocity3D * flapForce * .03f, ForceMode.Acceleration);
+        // }
+
+        //FORWARD
+        Vector3 newHoriz3D = transform.forward * (horizontalVelocity.magnitude + flapForce / rb.mass * Time.fixedDeltaTime);
+        Vector2 newHoriz = new Vector2(newHoriz3D.x, newHoriz3D.z);
+
+        if (newHoriz.magnitude < flapTerminalXZ)
+        {
+            rb.velocity = new Vector3(newHoriz.x, rb.velocity.y, newHoriz.y);
+        }
+        else
+        {
+            horizontalVelocity = newHoriz.normalized * horizontalVelocity.magnitude * .999f;
+            rb.velocity = new Vector3(horizontalVelocity.x, rb.velocity.y, horizontalVelocity.y);
+        }
+
+        //Vertical force
+        if (rb.velocity.y < flapTerminalY)
+        {
+            rb.AddForce(Vector3.up * flapForce, ForceMode.Acceleration);
+            if (rb.velocity.y > flapTerminalY) rb.velocity = new Vector3(rb.velocity.x, flapTerminalY, rb.velocity.z);
+        }
     }
 
     void GlideMovement()
@@ -201,16 +220,29 @@ public class BirdController : MonoBehaviour
         }
         transform.rotation = Quaternion.Euler(xRot, yRot, zRot);
 
-        //Need velocty to be facing forward
-        rb.velocity = transform.forward * rb.velocity.magnitude;
-        rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y * glideScale - .3f, rb.velocity.z);
-
+        //Moevement
+        //XZ
         Vector2 horizontalVelocity = new(rb.velocity.x, rb.velocity.z);
-        if (horizontalVelocity.magnitude > glideTerminalXZ)
+        Vector3 newForward = transform.forward * rb.velocity.magnitude;
+        Vector2 newHoriz = new Vector2(newForward.x, newForward.z);
+        if (horizontalVelocity.magnitude < glideTerminalXZ)
         {
-            horizontalVelocity = horizontalVelocity.normalized * glideTerminalXZ;
+            rb.velocity = new Vector3(newHoriz.x, rb.velocity.y, newHoriz.y);
+        }
+        else
+        {
+            horizontalVelocity = newHoriz.normalized * glideTerminalXZ;
             rb.velocity = new Vector3(horizontalVelocity.x, rb.velocity.y, horizontalVelocity.y);
         }
+
+        //Y
+        rb.velocity = new Vector3(rb.velocity.x, newForward.y * glideScale, rb.velocity.z);
+        if (rb.velocity.y < glideTerminalY)
+        {
+            rb.velocity = new Vector3(rb.velocity.x, glideTerminalY, rb.velocity.z);
+        }
+
+
     }
 
     void DiveMovement()
@@ -235,12 +267,10 @@ public class BirdController : MonoBehaviour
         if (horizontalInput == Vector2.zero || horizontalVelocity.magnitude > diveTerminalXZ)
         {
             rb.AddForce(-horizontalVelocity3D * diveForceXZ * .1f, ForceMode.Acceleration);
-
         }
         else
         {
             rb.AddForce(horizontalInput3D * diveForceXZ, ForceMode.Acceleration);
-
         }
     }
 
@@ -270,6 +300,8 @@ public class BirdController : MonoBehaviour
         {
             state = BirdState.Dive;
             animator.SetTrigger("Dive");
+            transform.Rotate(Vector3.right, 30 - transform.rotation.eulerAngles.x);
+            transform.Rotate(Vector3.forward, -transform.rotation.eulerAngles.z);
         }
     }
 
@@ -279,6 +311,7 @@ public class BirdController : MonoBehaviour
         {
             state = BirdState.Glide;
             animator.SetTrigger("Glide");
+            transform.Rotate(Vector3.right, -30);
         }
     }
 }
