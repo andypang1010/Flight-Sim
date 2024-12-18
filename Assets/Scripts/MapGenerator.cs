@@ -11,7 +11,7 @@ public class MapGenerator : MonoBehaviour
 
 	public enum DrawMode { NoiseMap, ColourMap, Mesh, FalloffMap };
 	public DrawMode drawMode;
-	SplatmapGenerator splatmapGenerator;
+	public SplatmapGenerator splatmapGenerator;
 	public Noise.NormalizeMode normalizeMode;
 
 	public const int mapChunkSize = 241;
@@ -28,6 +28,7 @@ public class MapGenerator : MonoBehaviour
 	public Vector2 offset;
 
 	public bool useFalloff;
+	public float fallOffSharpness, fallOffOffset;
 
 	public float meshHeightMultiplier;
 	public AnimationCurve meshHeightCurve;
@@ -39,6 +40,7 @@ public class MapGenerator : MonoBehaviour
 
 	public VegetationRule[] vegetationRules;
 	public bool autoUpdateVegetation = true;
+	
 	private Transform vegetationParent;
 	public float placementThreshold = 0.6f;
 
@@ -52,8 +54,7 @@ public class MapGenerator : MonoBehaviour
 
 	void Awake()
 	{
-		falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize);
-		splatmapGenerator = GetComponent<SplatmapGenerator>();
+		falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize, fallOffSharpness, fallOffOffset);
 	}
 
 	public void DrawMapInEditor()
@@ -83,7 +84,7 @@ public class MapGenerator : MonoBehaviour
 		}
 		else if (drawMode == DrawMode.FalloffMap)
 		{
-			display.DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(mapChunkSize)));
+			display.DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(mapChunkSize, fallOffSharpness, fallOffOffset)));
 		}
 	}
 
@@ -218,7 +219,7 @@ public class MapGenerator : MonoBehaviour
 			octaves = 0;
 		}
 
-		falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize);
+		falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize, fallOffSharpness, fallOffOffset);
 	}
 
 	struct MapThreadInfo<T>
