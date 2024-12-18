@@ -31,6 +31,8 @@ public class BirdController : MonoBehaviour
     private PlayerInput playerInput;
 
     private BirdState state;
+    private Vector3 birdStartPos = new Vector3(462, 142.6f, -390);
+    private Quaternion birdStartRot = Quaternion.Euler(0, 180, 0);
 
 
     // Start is called before the first frame update
@@ -40,7 +42,7 @@ public class BirdController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         playerInput = GetComponent<PlayerInput>();
 
-        state = BirdState.Glide;
+        state = BirdState.Ground;
 
         //Setup input
         Cursor.lockState = CursorLockMode.Locked;
@@ -194,7 +196,7 @@ public class BirdController : MonoBehaviour
         if (Math.Abs(horizontalInput.x) >= .35f)
         {
             //Y rotation - direction facing
-            yRot += horizontalInput.x * .5f;
+            yRot += horizontalInput.x * .8f;
 
             //Z rotation - Wing tilt
             if (Math.Abs(zRot - 180) >= 160f)
@@ -313,5 +315,14 @@ public class BirdController : MonoBehaviour
             animator.SetTrigger("Glide");
             transform.Rotate(Vector3.right, -30);
         }
+    }
+
+    void OnReset()
+    {
+        transform.position = birdStartPos;
+        transform.rotation = birdStartRot;
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        state = BirdState.Ground;
     }
 }
