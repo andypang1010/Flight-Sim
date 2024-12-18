@@ -169,15 +169,16 @@ public class AtmosphereController : MonoBehaviour
 
     private float GetIntensityAtTime(float time)
     {
+        float epsilon = 0.001f;
         float buffer_seconds = 720f;
         float dy = noonIntensity - sunriseIntensity;
 
-        if (time < SUNRISE_TIME_SECONDS - buffer_seconds) return 0;
+        if (time < SUNRISE_TIME_SECONDS - buffer_seconds) return epsilon;
         else if (time < SUNRISE_TIME_SECONDS) return sunriseIntensity * ((time - SUNRISE_TIME_SECONDS + buffer_seconds) / buffer_seconds);
         else if (time < NOON_TIME_SECONDS) return sunriseIntensity + dy * ((time - SUNRISE_TIME_SECONDS) / SUNRISE_TIME_SECONDS);
         else if (time < SUNSET_TIME_SECONDS) return noonIntensity - dy * ((time - NOON_TIME_SECONDS) / SUNRISE_TIME_SECONDS);
         else if (time < SUNSET_TIME_SECONDS + buffer_seconds) return sunriseIntensity * ((-time + SUNSET_TIME_SECONDS + buffer_seconds) / buffer_seconds);
-        else return 0;
+        else return epsilon;
     }
 
     private Color GetColorAtTime(float time)

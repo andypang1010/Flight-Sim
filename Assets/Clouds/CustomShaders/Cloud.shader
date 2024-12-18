@@ -19,7 +19,7 @@ Shader "Unlit/Cloud"
             #include "UnityCG.cginc"
 
             // Maximum number of raymarching samples
-            #define MAX_STEP_COUNT 200
+            #define MAX_STEP_COUNT 300
             // #define PI 3.14159265359
 
             struct meshdata
@@ -48,6 +48,8 @@ Shader "Unlit/Cloud"
             // textures
             Texture3D CloudTexture;
             SamplerState samplerCloudTexture;
+            Texture2D BlueNoiseTexture;
+            SamplerState samplerBlueNoiseTexture;
             sampler2D _MainTex;
             sampler2D _CameraDepthTexture;
 
@@ -55,13 +57,25 @@ Shader "Unlit/Cloud"
             float stepSize;
             float densityThreshold;
             float densityMultiplier;
+            float ditherMultiplier;
 
-            // other
+            // box
             float3 boundsMin;
             float3 boundsMax;
 
+            // sphere
+            float3 sphereCenter;
+            float innerRadius;
+            float outerRadius;
+            float useSphere;
+
+            // light (unity provides)
+            float4 _LightColor0;
+
+
             //constants
             static const float PI = 3.14159265359;
+            static const float INF = 1e20;
 
             // axis aligned bounding box
             // never returns negative distance
@@ -76,6 +90,52 @@ Shader "Unlit/Cloud"
                 float dstInsideBox = max(0, tFar - dstToBox);
                 return float2(dstToBox, dstInsideBox);
             }
+
+            float2 intersectSphere(float3 rayOrigin, float3 rayDir, float3 sphereCenter, float sphereRadius) {
+                float3 oc = rayOrigin - sphereCenter;
+                float a = dot(rayDir, rayDir);
+                float b = 2.0 * dot(oc, rayDir);
+                float c = dot(oc, oc) - sphereRadius * sphereRadius;
+                float discriminant = b*b - 4*a*c;
+                if (discriminant < 0) {
+                    return float2(INF, INF);
+                }
+                float t1 = (-b - sqrt(discriminant)) / (2.0 * a);
+                float t2 = (-b + sqrt(discriminant)) / (2.0 * a);
+                return float2(t1, t2);
+            }
+
+            float2 intersectShell(float3 rayOrigin, float3 rayDir, float3 sphereCenter, float innerRadius, float outerRadius) {
+                // Intersect with the outer sphere
+                float2 outerHits = intersectSphere(rayOrigin, rayDir, sphereCenter, outerRadius);
+                // Intersect with the inner sphere
+                float2 innerHits = intersectSphere(rayOrigin, rayDir, sphereCenter, innerRadius);
+
+                // Check if the ray starts inside the shell
+                float distToCenter = length(rayOrigin - sphereCenter);
+                bool insideInner = distToCenter < innerRadius;
+                bool insideOuter = distToCenter < outerRadius;
+
+                // Starting inside the inner sphere
+                if (insideInner)
+                {
+                    float distanceToShell = innerHits.y;
+                    float exit = outerHits.y;
+                    return float2(distanceToShell, max(0.0, exit - distanceToShell));
+                }
+
+                // If starting inside the shell, distance to shell is 0
+                if (insideOuter) {
+                    float exit = min(innerHits.x, outerHits.y);
+                    return float2(0.0, max(0.0, exit));
+                }
+
+                // Starting outside both spheres
+                float distanceToShell = outerHits.x;
+                float exit = min(innerHits.x, outerHits.y);
+                return float2(distanceToShell, max(0.0, exit - distanceToShell));
+            }
+
 
             half beer(float dst) {
                 return exp(-dst * 1);
@@ -121,40 +181,42 @@ Shader "Unlit/Cloud"
                 return 0.2 + transmittance * 0.8; // hard coded for now
             }
 
+            float2 uvToPixel(float2 uv, float scale = 1000) {
+                return uv * _ScreenParams.xy / scale;
+            }
+
             fixed4 frag (v2f p) : SV_Target
             {
-                // float4 col = tex2D(_MainTex, p.uv);
+                float3 background = tex2D(_MainTex, p.uv);
 
                 float3 rayOrigin = _WorldSpaceCameraPos.xyz;
                 float viewLength = length(p.viewVector);
                 float3 rayDir = p.viewVector / viewLength;
                 float rawDepth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, p.uv);
                 float depth = LinearEyeDepth(rawDepth) * viewLength;
-                float2 t = intersectAABB(rayOrigin, rayDir, boundsMin, boundsMax);
+                float2 t;
+                if (useSphere > 0.5)
+                    t = intersectShell(rayOrigin, rayDir, sphereCenter, innerRadius, outerRadius);
+                else
+                    t = intersectAABB(rayOrigin, rayDir, boundsMin, boundsMax);
                 float distToBox = t.x;
                 float distInBox = t.y;
                 float maxDist = min(distInBox, depth - distToBox);
-                float3 currentPosition = rayOrigin + rayDir * distToBox;
+                if (maxDist < 1e-5)
+                    return float4(background, 0);
+
+                // blue noise dithering
+                float blueNoise = BlueNoiseTexture.Sample(samplerBlueNoiseTexture, uvToPixel(p.uv)).r;
+                float offset = (blueNoise * 2 - 1) + _Time.x % 16.0;
+                offset *= ditherMultiplier;
                 
-                float totalDistance = 0;
+                float3 currentPosition = rayOrigin + rayDir * (distToBox + offset);
+                if (currentPosition.y < 0)
+                    return float4(background, 0);
+                
+                float totalDistance = offset;
                 float lightEnergy = 0.5;
                 float transmittance = 1;
-                // float density = 0;
-                // int steps = 0;
-                //
-                // while (totalDistance < maxDist)
-                // {
-                //     steps ++;
-                //     if (steps >= MAX_STEP_COUNT) {
-                //         break;
-                //     }
-                //     density += sampleCloud(currentPosition) * stepSize;
-                //     totalDistance += stepSize;
-                //     currentPosition += rayDir * stepSize;
-                // }
-                // transmittance = beer(density);
-                // return col * transmittance;
-
                 
                 int stepCount = 0;
                 int maxSteps = 100;
@@ -186,8 +248,7 @@ Shader "Unlit/Cloud"
                 float phase = hg(cosAngle, 0.5) * 0.5 + 0.8; // TODO: tweak
                 lightEnergy *= phase;
                 
-                float3 background = tex2D(_MainTex, p.uv);
-                float3 cloudColor = float3(1,1,1) * lightEnergy;
+                float3 cloudColor = _LightColor0.xyz * lightEnergy;
                 float3 finalColor = background * transmittance + cloudColor * (1 - transmittance);
                 return float4(finalColor, 0);
             }

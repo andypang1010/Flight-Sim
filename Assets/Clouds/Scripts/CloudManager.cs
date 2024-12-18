@@ -9,13 +9,22 @@ namespace DefaultNamespace
     {
         public Transform cloudBox;
         public Shader cloudShader;
-        private Material cloudMaterial;
+        public NoiseGenerator noiseGenerator;
 
+        [Header("Settings")]
         public float stepSize;
         public float densityThreshold;
         public float densityMultiplier;
+        public float ditherMultiplier;
         
-        public NoiseGenerator noiseGenerator;
+        [Header("Sphere Shape")]
+        public bool useSphere;
+        public float innerRadius;
+        public float outerRadius;
+        public Vector3 sphereCenter;
+        
+        
+        private Material cloudMaterial;
 
         [ImageEffectOpaque]
         private void OnRenderImage(RenderTexture source, RenderTexture destination)
@@ -32,11 +41,17 @@ namespace DefaultNamespace
             
             cloudMaterial.SetVector("boundsMin", cloudBox.position - cloudBox.localScale / 2);
             cloudMaterial.SetVector("boundsMax", cloudBox.position + cloudBox.localScale / 2);
+            cloudMaterial.SetVector("sphereCenter", sphereCenter);
+            cloudMaterial.SetFloat("innerRadius", innerRadius);
+            cloudMaterial.SetFloat("outerRadius", outerRadius);
+            cloudMaterial.SetFloat("useSphere", useSphere ? 1 : 0);
             cloudMaterial.SetFloat("stepSize", stepSize);
             cloudMaterial.SetFloat("densityThreshold", densityThreshold);
             cloudMaterial.SetFloat("densityMultiplier", densityMultiplier);
+            cloudMaterial.SetFloat("ditherMultiplier", ditherMultiplier);
             
             cloudMaterial.SetTexture("CloudTexture", noiseGenerator.shapeTexture);
+            cloudMaterial.SetTexture("BlueNoiseTexture", noiseGenerator.blueNoiseTexture);
             Graphics.Blit(source, destination, cloudMaterial);
         }
     }

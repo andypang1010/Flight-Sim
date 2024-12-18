@@ -35,6 +35,7 @@ public class NoiseGenerator : MonoBehaviour
     [Header("Cloud Textures")]
     public RenderTexture shapeTexture;
     public RenderTexture detailTexture;
+    public Texture2D blueNoiseTexture;
 
     private void Start()
     {
