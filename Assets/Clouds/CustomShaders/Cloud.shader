@@ -124,6 +124,8 @@ Shader "Unlit/Cloud"
                     return float2(distanceToShell, max(0.0, exit - distanceToShell));
                 }
 
+                // TODO: doesn't work in these bottom 2 cases
+
                 // If starting inside the shell, distance to shell is 0
                 if (insideOuter) {
                     float exit = min(innerHits.x, outerHits.y);
@@ -168,7 +170,11 @@ Shader "Unlit/Cloud"
             float lightMarch(float3 position)
             {
                 float3 dirToLight = _WorldSpaceLightPos0.xyz; // direction TO light, this needs forward rendering mode
-                float distInBox = intersectAABB(position, dirToLight, boundsMin, boundsMax).y;
+                float distInBox;
+                if (useSphere > 0.5)
+                    distInBox = intersectShell(position, dirToLight, sphereCenter, innerRadius, outerRadius).y;
+                else
+                    distInBox = intersectAABB(position, dirToLight, boundsMin, boundsMax).y;
                 float stepSize = distInBox / 10; // hard coded
                 float totalDensity = 0;
                 for (int step = 0; step < 10; step++) {
