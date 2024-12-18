@@ -31,8 +31,8 @@ public class BirdController : MonoBehaviour
     private PlayerInput playerInput;
 
     private BirdState state;
-    private Vector3 birdStartPos = new Vector3(462, 142.6f, -390);
-    private Quaternion birdStartRot = Quaternion.Euler(0, 180, 0);
+    private Vector3 birdStartPos = new Vector3(461, 142.6f, -390);
+    private Quaternion birdStartRot = Quaternion.Euler(0, -85, 0);
 
 
     // Start is called before the first frame update
@@ -324,5 +324,6 @@ public class BirdController : MonoBehaviour
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         state = BirdState.Ground;
+        animator.SetTrigger("Ground");
     }
 }
